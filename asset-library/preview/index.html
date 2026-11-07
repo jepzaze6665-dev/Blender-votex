@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voxel Asset Library</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0a0e1a; color: #dff3ff; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
+  body { display: grid; grid-template-columns: 280px 1fr; }
+  aside { padding: 14px; overflow: auto; background: #111830; }
+  h1 { font-size: 18px; margin: 0 0 10px; }
+  button { display: block; width: 100%; margin: 4px 0; padding: 8px; color: inherit; background: #1b2546; border: 1px solid #2c477d; border-radius: 6px; text-align: left; overflow-wrap: anywhere; }
+  button.on { background: #2c477d; }
+  pre { font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  #view { position: relative; min-width: 0; min-height: 0; }
+  canvas { display: block; }
+  @media (max-width: 640px) { body { grid-template-columns: 1fr; grid-template-rows: 42% 58%; } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<aside><h1>Asset Library</h1><div id="list"></div><h1>ท่า</h1><div id="clips"></div><pre id="info"></pre></aside>
+<div id="view"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const view = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+view.append(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0e1a);
+scene.add(new THREE.HemisphereLight(0xcfe0ff, 0x26325c, 3));
+const sun = new THREE.DirectionalLight(0xffffff, 2.5);
+sun.position.set(2, 5, 4);
+scene.add(sun, new THREE.GridHelper(6, 12, 0x2c477d, 0x1b2546));
+const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 50);
+camera.position.set(2.2, 1.8, 3.6);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1, 0);
+
+let current = null, mixer = null, active = null;
+const loader = new GLTFLoader();
+const clock = new THREE.Clock();
+
+function size() {
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(view.clientWidth, view.clientHeight);
+  camera.aspect = view.clientWidth / Math.max(view.clientHeight, 1);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', size);
+size();
+
+function show(asset, button) {
+  document.querySelectorAll('#list button').forEach((b) => b.classList.remove('on'));
+  button.classList.add('on');
+  document.getElementById('info').textContent = JSON.stringify(asset, null, 1);
+  document.getElementById('clips').textContent = '';
+  if (current) scene.remove(current);
+  current = null; mixer = null; active = null;
+  if (!asset.model) return;
+  // Manifests sit in manifests/, so their paths are relative to that folder.
+  loader.load(new URL(asset.model, new URL('../manifests/', location.href)).href, (gltf) => {
+    current = gltf.scene;
+    scene.add(current);
+    mixer = new THREE.AnimationMixer(current);
+    for (const clip of gltf.animations) {
+      const b = document.createElement('button');
+      b.textContent = clip.name;
+      b.onclick = () => {
+        if (active) active.fadeOut(0.15);
+        active = mixer.clipAction(clip).reset().fadeIn(0.15).play();
+      };
+      document.getElementById('clips').append(b);
+    }
+    if (gltf.animations[0]) document.querySelector('#clips button').click();
+  }, undefined, () => { document.getElementById('info').textContent += '\n\nโหลดโมเดลไม่สำเร็จ'; });
+}
+
+fetch('../manifests.json').then((r) => r.json()).then((assets) => {
+  for (const asset of assets) {
+    const b = document.createElement('button');
+    b.textContent = asset.id;
+    b.onclick = () => show(asset, b);
+    document.getElementById('list').append(b);
+  }
+  document.querySelector('#list button')?.click();
+});
+
+renderer.setAnimationLoop(() => {
+  if (mixer) mixer.update(clock.getDelta());
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

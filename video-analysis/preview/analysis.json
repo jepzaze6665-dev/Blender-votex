@@ -1,0 +1,256 @@
+{
+ "video": {
+  "file": "preview.gif",
+  "size_mb": 2.04,
+  "container": "gif",
+  "duration_sec": 2.88,
+  "width": 512,
+  "height": 512,
+  "fps": 25.0,
+  "variable_frame_rate": false,
+  "video_codec": "gif",
+  "pix_fmt": "bgra",
+  "may_have_alpha": true,
+  "has_audio": false,
+  "audio_codec": null
+ },
+ "scan": {
+  "frames_decoded": 71,
+  "analysis_fps": 25.0,
+  "reduced_rate": false,
+  "cut_threshold": 0.35
+ },
+ "shots": [
+  {
+   "id": 1,
+   "start": 0.0,
+   "end": 2.84,
+   "duration": 2.84,
+   "mean_change": 0.0086,
+   "camera_hint": "push-in",
+   "camera_speed": 0.083,
+   "zoom_per_sec": 0.436,
+   "subject_motion": 0.31,
+   "typical_hold_frames": 1,
+   "effective_fps": 25.0
+  }
+ ],
+ "shots_note": null,
+ "shot_count": 1,
+ "mean_shot_seconds": 2.84,
+ "flashes_sec": [],
+ "motion_peaks_sec": [
+  1.36,
+  1.6,
+  1.84
+ ],
+ "frame_holds": {
+  "repeated_frame_share": 0.271,
+  "typical_hold_frames": 1,
+  "hold_distribution": {
+   "1": 50
+  },
+  "effective_fps_estimate": 25.0
+ },
+ "loop": {
+  "first_last_difference": 0.0,
+  "typical_frame_difference": 0.0073,
+  "starts_and_ends_empty": true,
+  "looks_seamless": false
+ },
+ "style": {
+  "palette": [
+   {
+    "hex": "#18161c",
+    "share": 0.815
+   },
+   {
+    "hex": "#2a172d",
+    "share": 0.05
+   },
+   {
+    "hex": "#5a1f4e",
+    "share": 0.046
+   },
+   {
+    "hex": "#b72d7f",
+    "share": 0.033
+   },
+   {
+    "hex": "#15161a",
+    "share": 0.019
+   },
+   {
+    "hex": "#18161d",
+    "share": 0.019
+   },
+   {
+    "hex": "#18161b",
+    "share": 0.013
+   },
+   {
+    "hex": "#18151d",
+    "share": 0.005
+   }
+  ],
+  "accent_palette": [
+   {
+    "hex": "#3c163e",
+    "share": 0.271
+   },
+   {
+    "hex": "#692060",
+    "share": 0.202
+   },
+   {
+    "hex": "#992471",
+    "share": 0.152
+   },
+   {
+    "hex": "#f83eb0",
+    "share": 0.144
+   },
+   {
+    "hex": "#db2778",
+    "share": 0.118
+   },
+   {
+    "hex": "#bc39a5",
+    "share": 0.113
+   }
+  ],
+  "mean_saturation": 0.258,
+  "mean_brightness": 0.15,
+  "median_unique_colours_per_frame": 256,
+  "pixel_block_size": 1,
+  "native_pixel_size_estimate": null,
+  "low_resolution_source": false
+ },
+ "audio": {
+  "present": false
+ },
+ "audio_hits_matching_visual_events_sec": [],
+ "sheets": [
+  "sheets/sheet_01.jpg",
+  "sheets/sheet_02.jpg"
+ ],
+ "frames": [
+  {
+   "file": "frames/f001_0000.000s.png",
+   "time": 0.0,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f002_0000.040s.png",
+   "time": 0.04,
+   "label": "S1 first"
+  },
+  {
+   "file": "frames/f003_0000.127s.png",
+   "time": 0.127,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f004_0000.255s.png",
+   "time": 0.255,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f005_0000.382s.png",
+   "time": 0.382,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f006_0000.509s.png",
+   "time": 0.509,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f007_0000.636s.png",
+   "time": 0.636,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f008_0000.764s.png",
+   "time": 0.764,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f009_0000.891s.png",
+   "time": 0.891,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f010_0001.018s.png",
+   "time": 1.018,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f011_0001.145s.png",
+   "time": 1.145,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f012_0001.273s.png",
+   "time": 1.273,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f013_0001.360s.png",
+   "time": 1.36,
+   "label": "S1 peak"
+  },
+  {
+   "file": "frames/f014_0001.420s.png",
+   "time": 1.42,
+   "label": "S1 mid"
+  },
+  {
+   "file": "frames/f015_0001.527s.png",
+   "time": 1.527,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f016_0001.600s.png",
+   "time": 1.6,
+   "label": "S1 peak"
+  },
+  {
+   "file": "frames/f017_0001.655s.png",
+   "time": 1.655,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f018_0001.782s.png",
+   "time": 1.782,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f019_0001.840s.png",
+   "time": 1.84,
+   "label": "S1 peak"
+  },
+  {
+   "file": "frames/f020_0001.909s.png",
+   "time": 1.909,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f021_0002.036s.png",
+   "time": 2.036,
+   "label": "S1 even"
+  },
+  {
+   "file": "frames/f022_0002.760s.png",
+   "time": 2.76,
+   "label": "S1 last"
+  }
+ ],
+ "environment": {
+  "blender_executable": "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe",
+  "gpu": "NVIDIA GeForce RTX 4060, 8188 MiB",
+  "speech_to_text": true,
+  "optical_flow": true,
+  "yt_dlp": false
+ }
+}

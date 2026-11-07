@@ -1,0 +1,17 @@
+{
+  "frame_count": 72,
+  "resolution": [
+    1024,
+    1024
+  ],
+  "first_frame_empty": true,
+  "last_frame_empty": true,
+  "edge_max_alpha (3px border, all frames)": 0,
+  "no_edge_clipping": true,
+  "peak_coverage_frame": 43,
+  "peak_coverage_pct": 23.45,
+  "max_frame_to_frame_alpha_jump_pct": 9.97,
+  "off_palette_hue_pct (outside 255..360/0..15 deg)": 0.0,
+  "palette_ok": true,
+  "PASS": true
+}

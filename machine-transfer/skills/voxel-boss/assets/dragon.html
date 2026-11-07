@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>Dragon Clip Test</title>
+<style>
+html,body{margin:0;height:100%;background:#0d1530;overflow:hidden;font:15px sans-serif;color:#dfe9ff}
+#ui{position:fixed;left:12px;top:12px;display:flex;gap:6px;flex-wrap:wrap}
+button{background:#1d3270;color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer}
+button.on{background:#3f86ff}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="ui"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+document.body.append(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1530);
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 300);
+camera.position.set(-22, 10, -28);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 5.5, -1);
+scene.add(new THREE.HemisphereLight(0xcfe0ff, 0x223366, 2));
+const sun = new THREE.DirectionalLight(0xffffff, 2.4);
+sun.position.set(-10, 20, 14);
+scene.add(sun);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshStandardMaterial({ color: 0x4a6cb5 }));
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+const hero = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.9, 0.8), new THREE.MeshStandardMaterial({ color: 0xdddddd }));
+hero.position.set(7, 0.95, -9);
+scene.add(hero);
+
+let mixer, current, clips = {}, head, foot, restTurn;
+// Each attack starts its effects on the frame that lands the blow (24 fps clips).
+const ATTACKS = {
+  Bite: [{ file: 'bite', at: 21 / 24, place: 'mouth' }],
+  Claw: [{ file: 'claw', at: 21 / 24, place: 'foot' }],
+  TailSwipe: [{ file: 'tail', at: 18 / 24, place: 'root' }],
+  WingGust: [{ file: 'gust', at: 23 / 24, place: 'front' }],
+  FrostBreath: [{ file: 'breath', at: 28 / 24, place: 'mouth', follow: true }, { file: 'floor', at: 30 / 24, place: 'origin' }],
+};
+const fx = {};
+const mouth = new THREE.Vector3(), turn = new THREE.Quaternion();
+function loadFx() {
+  const loader = new GLTFLoader();
+  for (const list of Object.values(ATTACKS)) for (const item of list) {
+    loader.load(`assets/vfx_dragon_${item.file}.glb?t=${Date.now()}`, (gltf) => {
+      gltf.scene.visible = false;
+      scene.add(gltf.scene);
+      const m = new THREE.AnimationMixer(gltf.scene);
+      const action = m.clipAction(new THREE.AnimationClip(item.file, -1, gltf.animations.flatMap((a) => a.tracks)));
+      action.setLoop(THREE.LoopOnce);
+      action.clampWhenFinished = true;
+      fx[item.file] = { model: gltf.scene, mixer: m, action, live: false };
+    });
+  }
+}
+function mouthPoint() {
+  head.getWorldQuaternion(turn).multiply(restTurn);
+  head.getWorldPosition(mouth);
+  return mouth.add(new THREE.Vector3(0, -0.4, -3.7).applyQuaternion(turn));
+}
+function place(item, model) {
+  if (item.place === 'mouth') { model.position.copy(mouthPoint()); model.quaternion.copy(turn); }
+  if (item.place === 'foot') { foot.getWorldPosition(model.position); model.position.y = 0; }
+  if (item.place === 'root') model.position.set(0, 0, 2.75);
+  if (item.place === 'front') model.position.set(0, 0, -2);
+}
+let clipTime = 0, fired = new Set();
+function advance(dt) {
+  mixer.update(dt);
+  clipTime += dt;
+  for (const item of ATTACKS[current?.getClip().name] || []) {
+    const e = fx[item.file];
+    if (e && !fired.has(item) && clipTime >= item.at) {
+      fired.add(item);
+      e.model.visible = e.live = true;
+      place(item, e.model);
+      e.item = item;
+      e.action.reset().play();
+    }
+  }
+  for (const e of Object.values(fx)) {
+    if (!e.live) continue;
+    e.mixer.update(dt);
+    if (e.item.follow) place(e.item, e.model);
+    if (e.action.time >= e.action.getClip().duration - 0.01) e.live = e.model.visible = false;
+  }
+}
+function play(name) {
+  if (current) current.stop();
+  current = mixer.clipAction(clips[name]);
+  current.reset().play();
+  clipTime = 0;
+  fired = new Set();
+  for (const e of Object.values(fx)) e.live = e.model.visible = false;
+  document.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.textContent === name));
+}
+new GLTFLoader().load(`assets/voxel_dragon_rigged.glb?t=${Date.now()}`, (gltf) => {
+  scene.add(gltf.scene);
+  mixer = new THREE.AnimationMixer(gltf.scene);
+  for (const c of gltf.animations) {
+    clips[c.name] = c;
+    const b = document.createElement('button');
+    b.textContent = c.name;
+    b.onclick = () => play(c.name);
+    document.getElementById('ui').append(b);
+  }
+  head = gltf.scene.getObjectByName('Head');
+  foot = gltf.scene.getObjectByName('FrontFootR');
+  gltf.scene.updateMatrixWorld(true);
+  restTurn = head.getWorldQuaternion(new THREE.Quaternion()).invert();
+  loadFx();
+  play('Idle');
+  window.__d = { fx, advance, get clipTime() { return clipTime; }, THREE, scene, camera, renderer, controls, clips, mixer, play, model: gltf.scene,
+    at(name, seconds) { play(name); current.paused = true; current.time = seconds; mixer.update(0); gltf.scene.updateMatrixWorld(true); renderer.render(scene, camera); return renderer.domElement; } };
+});
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  if (mixer) advance(Math.min(clock.getDelta(), 0.05));
+  controls.update();
+  renderer.render(scene, camera);
+});
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

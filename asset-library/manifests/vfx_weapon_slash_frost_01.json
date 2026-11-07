@@ -1,0 +1,8 @@
+{
+  "id": "vfx_weapon_slash_frost_01",
+  "type": "vfx",
+  "kind": "trail",
+  "attach": "Tip",
+  "params": {"colour": "#67b9e9", "life": 0.16},
+  "source": "original procedural effect in web-prototype"
+}

@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voxel Top Down Test</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #070a14; overflow: hidden; color: #dff3ff;
+    font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
+  canvas { display: block; touch-action: none; }
+  #help { position: fixed; left: 16px; top: 14px; font-size: 14px; line-height: 1.6; opacity: .8; pointer-events: none; }
+  #combo { position: fixed; right: 16px; top: 12px; font-size: 30px; font-weight: 800; color: #96d9f5; pointer-events: none; }
+  #slash { position: fixed; right: 20px; bottom: 20px; width: 84px; height: 84px; border-radius: 50%;
+    border: 2px solid #67b9e9; background: #142352cc; color: #fff; font-size: 15px; display: none; }
+  @media (pointer: coarse) { #slash { display: block; } }
+  #hud { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); font-size: 18px; font-weight: 700; white-space: nowrap; pointer-events: none; }
+  #over { position: fixed; inset: 0; display: none; place-items: center; text-align: center; background: #070a14cc; }
+  #over h1 { font-size: 40px; margin: 0 0 8px; color: #96d9f5; }
+  @media (max-width: 560px) { #help { display: none; } #hud { font-size: 15px; } #combo { top: 40px; font-size: 22px; } }
+  .pop { position: fixed; font-weight: 800; font-size: 26px; color: #fff; text-shadow: 0 0 10px #67b9e9;
+    pointer-events: none; transform: translate(-50%, -50%); animation: rise .7s ease-out forwards; }
+  @keyframes rise { to { opacity: 0; margin-top: -60px; } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="help">WASD หรือลูกศร: เดิน<br>Space หรือคลิก: ฟัน</div>
+<div id="hud"></div>
+<div id="over"><div><h1>แพ้แล้ว</h1><p id="final"></p><p>กด R หรือแตะเพื่อเล่นใหม่</p></div></div>
+<div id="combo"></div>
+<button id="slash">ฟัน</button>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { loadIceMap } from './ice_map.js';
+
+// Views: map (default, wide third person), ?view=top, ?view=follow.
+const VIEW = new URLSearchParams(location.search).get('view') || 'map';
+const MAP = VIEW === 'map';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x070a14);
+scene.fog = new THREE.Fog(0x070a14, 12, 30);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 320);
+
+scene.add(new THREE.HemisphereLight(0xbcd4ff, 0x26325c, 3.2));
+const sun = new THREE.DirectionalLight(0xd6e4ff, 3);
+sun.position.set(-4, 8, 5);
+scene.add(sun);
+
+const world = MAP ? await loadIceMap(scene, renderer) : null;
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.38, 0.4, 0.85);
+if (MAP) { bloom.strength = 0.24; bloom.radius = 0.5; bloom.threshold = 0.9; }
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// Ground: one instanced mesh of slightly varied tiles.
+{
+  const n = 40, tile = 1;
+  const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(tile, 0.2, tile),
+    new THREE.MeshStandardMaterial({ roughness: 0.8 }), n * n);
+  const m = new THREE.Matrix4(), c = new THREE.Color();
+  for (let x = 0; x < n; x++) for (let z = 0; z < n; z++) {
+    const i = x * n + z;
+    m.setPosition(x - n / 2, -0.1 - ((x * 7 + z * 13) % 3) * 0.01, z - n / 2);
+    mesh.setMatrixAt(i, m);
+    mesh.setColorAt(i, c.set((x + z) % 2 ? 0x18213f : 0x141b35));
+  }
+  if (!MAP) scene.add(mesh);
+}
+
+const box = (w, h, d, color, y = 0, x = 0, z = 0) => {
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, roughness: 0.7 }));
+  b.position.set(x, y, z);
+  return b;
+};
+
+// Placeholder voxel character. Forward is -Z.
+const player = new THREE.Group();
+const body = new THREE.Group();
+player.add(body);
+scene.add(player);
+const DARK = 0x1b2340, MID = 0x2c477d, SKIN = 0xcfd9ea;
+body.add(box(0.62, 0.72, 0.34, MID, 1.08));
+const head = box(0.44, 0.44, 0.44, SKIN, 1.68);
+head.add(box(0.09, 0.09, 0.02, 0x142352, 0.03, -0.1, -0.225), box(0.09, 0.09, 0.02, 0x142352, 0.03, 0.1, -0.225));
+body.add(head);
+const limb = (x, y, w, h, color) => {
+  const pivot = new THREE.Group();
+  pivot.position.set(x, y, 0);
+  pivot.add(box(w, h, w, color, -h / 2));
+  body.add(pivot);
+  return pivot;
+};
+const legL = limb(-0.17, 0.72, 0.26, 0.72, DARK), legR = limb(0.17, 0.72, 0.26, 0.72, DARK);
+const armL = limb(-0.42, 1.38, 0.2, 0.62, MID);
+
+// Right arm hangs from a chest pivot, so the whole swing is one rotation.
+const swing = new THREE.Group();
+swing.position.y = 1.38;
+body.add(swing);
+const armR = new THREE.Group();
+armR.position.x = 0.42;
+armR.add(box(0.2, 0.62, 0.2, MID, -0.31));
+swing.add(armR);
+const holder = new THREE.Group();   // the hand_R attachment point
+holder.position.y = -0.62;
+armR.add(holder);
+
+const tipPoint = new THREE.Object3D(), innerPoint = new THREE.Object3D();
+const pulse = { value: -0.4 };
+
+new GLTFLoader().load('assets/voxel_weapon.glb', (gltf) => {
+  const weapon = gltf.scene;
+  weapon.traverse((o) => {
+    if (!o.isMesh) return;
+    // Blender stored the pulse route in the second UV set.
+    o.geometry.setAttribute('aPulse', o.geometry.attributes.uv1 ?? o.geometry.attributes.uv);
+    o.material.onBeforeCompile = (s) => {
+      s.uniforms.uHead = pulse;
+      s.vertexShader = 'attribute vec2 aPulse;\nvarying float vPulse;\n' +
+        s.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvPulse = aPulse.x;');
+      s.fragmentShader = 'uniform float uHead;\nvarying float vPulse;\n' +
+        s.fragmentShader.replace('#include <emissivemap_fragment>',
+          `#include <emissivemap_fragment>
+           float pz = (vPulse - uHead) / 0.13;
+           totalEmissiveRadiance *= 1.0 + 7.0 * exp(-pz * pz);`);
+    };
+  });
+  weapon.scale.setScalar(1);
+  weapon.position.y = 0.1;   // the right grip sits just below the middle of the shaft
+  tipPoint.position.set(-0.72, 0.33, 0);
+  innerPoint.position.set(-0.66, 0.47, 0);
+  weapon.add(tipPoint, innerPoint);
+  holder.add(weapon);
+  ready = true;
+}, undefined, () => {
+  document.getElementById('help').textContent = 'โหลดเคียวไม่สำเร็จ: ต้องเปิดผ่านเซิร์ฟเวอร์ ไม่ใช่เปิดไฟล์ตรงๆ';
+});
+
+// Rigged character: clips come from Blender, and the weapon rides the socket bone.
+let mixer = null, rigged = false, currentClip = null;
+const clips = {};
+function playClip(name, fade = 0.14) {
+  const next = clips[name];
+  if (!next || currentClip === next) return;
+  next.reset().setEffectiveWeight(1).fadeIn(fade).play();
+  if (currentClip) currentClip.fadeOut(fade);
+  currentClip = next;
+}
+const gripR = new THREE.Object3D(), gripL = new THREE.Object3D();
+gripL.position.y = -0.45;   // the left hand sits lower on the shaft
+holder.add(gripR, gripL);
+let arms = [], lean = null;
+// ?char=reaper loads the armoured character; the block character is the default.
+const CHARACTER = { reaper: 'assets/voxel_character_rigged.glb', block: 'assets/voxel_block_rigged.glb' }[new URLSearchParams(location.search).get('char')]
+  || 'assets/voxel_modular_rigged.glb';
+let floatingHands = [], leftGrip = 0, reach = 2.7;
+new GLTFLoader().load(`${CHARACTER}?t=${Date.now()}`, (gltf) => {  // never reuse a cached model
+  body.clear();
+  lean = new THREE.Group();   // leans the whole body into movement and turns
+  body.add(lean);
+  lean.add(gltf.scene);
+  gltf.scene.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  body.updateMatrixWorld(true);
+  const get = (n) => gltf.scene.getObjectByName(n);
+  const socket = get('Weapon');
+  // Export can change a bone's rest rotation, so cancel it instead of guessing an offset.
+  const align = new THREE.Group();
+  socket.add(align);
+  align.quaternion.copy(socket.getWorldQuaternion(new THREE.Quaternion()).invert()
+    .multiply(player.getWorldQuaternion(new THREE.Quaternion())));
+  align.add(holder);
+  holder.position.set(0, 0, 0);
+  holder.rotation.set(0, 0, 0);
+  const arm = (side, grip, pole) => {
+    const upper = get(`Arm${side}`), fore = get(`Fore${side}`), hand = get(`Hand_${side}`);
+    const s = upper.getWorldPosition(new THREE.Vector3()), e = fore.getWorldPosition(new THREE.Vector3());
+    const h = hand.getWorldPosition(new THREE.Vector3());
+    return { upper, fore, hand, grip, pole, l1: s.distanceTo(e), l2: e.distanceTo(h),
+      restU: upper.quaternion.clone(), restF: fore.quaternion.clone() };
+  };
+  if (get('ArmR')) {
+    arms = [arm('R', gripR, new THREE.Vector3(0.8, -0.6, 0.2)), arm('L', gripL, new THREE.Vector3(-0.8, -0.6, 0.2))];
+  } else {
+    // No arms: floating hands simply sit on the grips.
+    floatingHands = [[get('Hand_R'), gripR], [get('Hand_L'), gripL]];
+    holder.scale.setScalar(1.25);
+    reach = 3.2;   // the bigger scythe reaches further
+  }
+  mixer = new THREE.AnimationMixer(gltf.scene);
+  for (const clip of gltf.animations) clips[clip.name] = mixer.clipAction(clip);
+  for (const [name, action] of Object.entries(clips)) {
+    if (!/^(Slash|Cast)/.test(name)) continue;
+    action.setLoop(THREE.LoopOnce, 1);
+    action.clampWhenFinished = true;
+    action.timeScale = name.startsWith('Slash') ? 1.15 : 1;
+  }
+  const spring = (name, gain, stiff, limit, keyed = false) => ({ node: get(name), gain, stiff, limit, keyed,
+    rest: get(name).quaternion.clone(),
+    damp: 2 * Math.sqrt(stiff) * 0.8, last: null, drag: new THREE.Vector2(), target: new THREE.Vector2(),
+    tilt: new THREE.Vector2(), speed: new THREE.Vector2() });
+  springs = [
+    ...['SkirtF', 'SkirtB', 'SkirtR', 'SkirtL', 'Cape'].filter(get).map((n) => spring(n, 0.08, 45, 0.5)),
+    spring('PadR', 0.02, 120, 0.2), spring('PadL', 0.02, 120, 0.2),
+    spring('Head', 0.01, 110, 0.12, true), spring('Weapon', 0.012, 90, 0.14, true),
+  ];
+  rigged = true;
+  playClip('Idle', 0);
+});
+
+// Secondary motion: each part is a damped spring that tips away from how it is moving.
+let springs = [];
+const sP = new THREE.Vector3(), sAxis = new THREE.Vector3(), sQ = new THREE.Quaternion();
+const sW = new THREE.Quaternion(), sPar = new THREE.Quaternion();
+function updateSprings(dt) {
+  player.updateWorldMatrix(true, true);
+  // Parts without keys are not reset by the mixer, so reset them or rotation accumulates.
+  for (const p of springs) if (!p.keyed) p.node.quaternion.copy(p.rest);
+  player.updateWorldMatrix(true, true);
+  for (const p of springs) {
+    p.node.getWorldPosition(sP);
+    if (!p.last) p.last = sP.clone();
+    const inv = 1 / Math.max(dt, 1 / 240);
+    const vx = THREE.MathUtils.clamp((sP.x - p.last.x) * inv, -7, 7);
+    const vz = THREE.MathUtils.clamp((sP.z - p.last.z) * inv, -7, 7);
+    p.last.copy(sP);
+    // Low-pass the motion first: raw per-frame speed carries the walk bounce and frame jitter.
+    const filter = 1 - Math.exp(-dt / 0.11);
+    p.drag.x += (vx - p.drag.x) * filter;
+    p.drag.y += (vz - p.drag.y) * filter;
+    p.target.set(-p.drag.x * p.gain, -p.drag.y * p.gain).clampLength(0, p.limit);
+    // Near-critical damping, in small fixed steps so frame rate cannot make it ring.
+    const steps = Math.max(1, Math.ceil(dt * 240)), h = dt / steps;
+    for (let n = 0; n < steps; n++) {
+      p.speed.x += ((p.target.x - p.tilt.x) * p.stiff - p.speed.x * p.damp) * h;
+      p.speed.y += ((p.target.y - p.tilt.y) * p.stiff - p.speed.y * p.damp) * h;
+      p.tilt.addScaledVector(p.speed, h);
+    }
+    const amount = p.tilt.length();
+    if (amount < 1e-4) continue;
+    // A part dragged toward +x tips about the axis up x drag.
+    sAxis.set(p.tilt.y, 0, -p.tilt.x).normalize();
+    sQ.setFromAxisAngle(sAxis, amount);
+    p.node.getWorldQuaternion(sW);
+    p.node.parent.getWorldQuaternion(sPar).invert();
+    p.node.quaternion.copy(sPar.multiply(sQ).multiply(sW));
+    p.node.updateWorldMatrix(false, true);
+  }
+}
+
+// Two-bone IK: hands follow the grips, so they stay on the shaft through any swing.
+const vS = new THREE.Vector3(), vE = new THREE.Vector3(), vH = new THREE.Vector3(), vT = new THREE.Vector3();
+const vD = new THREE.Vector3(), vP = new THREE.Vector3(), vA = new THREE.Vector3(), vB = new THREE.Vector3();
+const qW = new THREE.Quaternion(), qP = new THREE.Quaternion(), qD = new THREE.Quaternion();
+function turnWorld(obj, from, to) {
+  qD.setFromUnitVectors(vA.copy(from).normalize(), vB.copy(to).normalize());
+  obj.getWorldQuaternion(qW);
+  obj.parent.getWorldQuaternion(qP).invert();
+  obj.quaternion.copy(qP.multiply(qD).multiply(qW));
+  obj.updateWorldMatrix(false, true);
+}
+function solveArms() {
+  player.updateWorldMatrix(true, true);
+  // The right hand keeps the weapon; the left joins the shaft only while attacking.
+  leftGrip += ((attack >= 0 ? 1 : 0) - leftGrip) * 0.22;
+  floatingHands.forEach(([hand, grip], i) => {
+    const onGrip = hand.parent.worldToLocal(grip.getWorldPosition(vT));
+    hand.position.lerp(onGrip, i === 0 ? 1 : leftGrip);
+  });
+  for (const a of arms) {
+    a.upper.quaternion.copy(a.restU); a.fore.quaternion.copy(a.restF);
+    a.upper.updateWorldMatrix(false, true);
+    a.upper.getWorldPosition(vS); a.fore.getWorldPosition(vE);
+    a.grip.getWorldPosition(vT);
+    const reach = a.l1 + a.l2 - 0.005;
+    vD.copy(vT).sub(vS);
+    let d = vD.length();
+    if (d > reach) { vD.multiplyScalar(reach / d); vT.copy(vS).add(vD); d = reach; }
+    vD.normalize();
+    vP.copy(a.pole).applyQuaternion(player.quaternion);
+    vP.addScaledVector(vD, -vP.dot(vD)).normalize();
+    const along = (a.l1 * a.l1 - a.l2 * a.l2 + d * d) / (2 * d);
+    const out = Math.sqrt(Math.max(a.l1 * a.l1 - along * along, 0));
+    const elbow = vS.clone().addScaledVector(vD, along).addScaledVector(vP, out);
+    turnWorld(a.upper, vE.clone().sub(vS), elbow.clone().sub(vS));
+    a.fore.getWorldPosition(vE); a.hand.getWorldPosition(vH);
+    turnWorld(a.fore, vH.clone().sub(vE), vT.clone().sub(vE));
+  }
+}
+
+// Enemies: voxel creatures that walk at the player.
+const enemies = [];
+function addEnemy(wave) {
+  const big = wave >= 3 && Math.random() < 0.25;
+  const g = new THREE.Group();
+  const size = big ? 1.25 : 0.8;
+  const shell = box(size, size, size, big ? 0x6b2f7a : 0x3f4f8f, size / 2);
+  shell.add(box(size * 0.16, size * 0.16, 0.03, 0xffffff, size * 0.14, -size * 0.2, -size / 2 - 0.01),
+    box(size * 0.16, size * 0.16, 0.03, 0xffffff, size * 0.14, size * 0.2, -size / 2 - 0.01));
+  g.add(shell);
+  const angle = Math.random() * Math.PI * 2;
+  g.position.set(player.position.x + Math.cos(angle) * 11, 0, player.position.z + Math.sin(angle) * 11);
+  if (MAP) { const r = 5 + Math.random() * 7; g.position.set(world.arena.x + Math.cos(angle) * r, world.arena.top, world.arena.z + Math.sin(angle) * r); }
+  scene.add(g);
+  enemies.push({ g, shell, hp: big ? 3 : 1, speed: (big ? 1.3 : 1.9) + wave * 0.12, score: big ? 30 : 10,
+    radius: size * 0.5, knock: new THREE.Vector3(), flash: 0, hop: Math.random() * 6 });
+}
+
+// Cube particles: one pool, one draw call.
+const MAX = 320;
+const cubes = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshBasicMaterial({ color: new THREE.Color(0.55, 1.3, 1.9), toneMapped: false }), MAX);
+cubes.frustumCulled = false;
+scene.add(cubes);
+const parts = Array.from({ length: MAX }, () => ({ p: new THREE.Vector3(), v: new THREE.Vector3(), life: 0, max: 1, size: 0.05 }));
+let nextPart = 0;
+function spawn(p, v, life, size) {
+  const a = parts[nextPart++ % MAX];
+  a.p.copy(p); a.v.copy(v); a.life = a.max = life; a.size = size;
+}
+
+// Expanding shockwave ring on the ground.
+const ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.6, 1.4, 2.0), transparent: true,
+  opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+const ring = new THREE.Mesh(new THREE.RingGeometry(0.86, 1, 32, 1), ringMat);
+ring.rotation.x = -Math.PI / 2;
+ring.position.y = 0.04;
+scene.add(ring);
+let ringAge = 9;
+
+// Slash trail: a ribbon between two points on the blade.
+const SEG = 26;
+const trailPos = new Float32Array(SEG * 2 * 3), trailCol = new Float32Array(SEG * 2 * 3);
+const trailGeo = new THREE.BufferGeometry();
+trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+trailGeo.setAttribute('color', new THREE.BufferAttribute(trailCol, 3));
+{
+  const idx = [];
+  for (let i = 0; i < SEG - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  trailGeo.setIndex(idx);
+}
+const trail = new THREE.Mesh(trailGeo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true,
+  side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+trail.frustumCulled = false;
+scene.add(trail);
+const history = [];
+
+// Attack timing in seconds. Each phase is a pose the rig eases toward.
+let WINDUP = 0.217, CUT = 0.181, RECOVER = 0.47;
+// Combo steps in clip frames: when the hit window opens, how long it lasts, and the clip end.
+const COMBO = [
+  { clip: 'Slash1', windup: 4, cut: 5, total: 19, reach: -0.1 },
+  { clip: 'Slash2', windup: 4, cut: 5, total: 19, reach: -0.1 },
+  { clip: 'Slash3', windup: 6, cut: 8, total: 23, reach: -2 },   // a full spin hits all around
+  { clip: 'CastVortex', windup: 10, cut: 1, total: 28, cast: true },
+  { clip: 'CastEclipse', windup: 33, cut: 1, total: 48, cast: true },
+];
+let step = 0, queued = false;
+function startStep(n) {
+  step = n; queued = false; attack = 0; didHit = false; slashes++; pulse.value = -0.4;
+  const c = COMBO[n], f = 1 / (24 * (c.cast ? 1 : 1.15));
+  if (clips[c.clip]) { WINDUP = c.windup * f; CUT = c.cut * f; RECOVER = (c.total - c.windup - c.cut) * f; }
+  playClip(clips[c.clip] ? c.clip : 'Slash', 0.05);
+}
+let hp = 5, score = 0, kills = 0, wave = 0, hurt = 0, over = false;
+let ready = false, attack = -1, didHit = false, stop = 0, shake = 0, combo = 0, comboTimer = 0, slashes = 0, hits = 0;
+const ease = (t) => t * t * (3 - 2 * t);
+
+function slash() {
+  if (over) return restart();
+  if (!ready) return;
+  if (attack < 0) startStep(0);
+  else if (attack > WINDUP && !COMBO[step].cast) queued = true;   // pressed during a swing: chain the next one
+}
+
+const keys = {};
+addEventListener('keydown', (e) => {
+  keys[e.code] = true;
+  if (e.code === 'KeyR' && over) restart();
+  if (e.code === 'KeyV') { show2d = !show2d; activeLayers.forEach((m) => { m.visible = show2d; }); }
+  if (e.code.startsWith('Digit')) castSkill(Number(e.code.slice(5)));
+  if (e.code === 'Space') { e.preventDefault(); if (MAP) jump(); else slash(); }
+});
+addEventListener('keyup', (e) => { keys[e.code] = false; });
+// Default view: high camera, click the ground to walk, click an enemy to attack it.
+const TOP = VIEW === 'top';
+let moveTo = null, chase = null;
+const ray = new THREE.Raycaster(), groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+const marker = new THREE.Mesh(new THREE.RingGeometry(0.28, 0.38, 24),
+  new THREE.MeshBasicMaterial({ color: 0x67b9e9, transparent: true, opacity: 0, side: THREE.DoubleSide }));
+marker.rotation.x = -Math.PI / 2;
+marker.position.y = 0.05;
+scene.add(marker);
+function clickWorld(point) {
+  chase = enemies.find((e) => e.g.position.distanceTo(point) < 1.1) || null;
+  moveTo = point.clone().setY(0);
+  marker.position.x = point.x; marker.position.z = point.z;
+  marker.material.opacity = chase ? 0 : 1;
+}
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  if (!TOP || over) return slash();
+  ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, 1 - e.clientY / innerHeight * 2), camera);
+  const hit = ray.ray.intersectPlane(groundPlane, new THREE.Vector3());
+  if (hit) clickWorld(hit);
+});
+if (TOP) {
+  document.getElementById('help').innerHTML = 'คลิกพื้น: เดิน<br>คลิกศัตรู: เข้าไปตี<br>Space: ฟัน<br>1, 2, 3: สกิล<br>V: เปิดปิดชั้น 2D';
+  scene.fog.near = 30; scene.fog.far = 60;
+  bloom.strength = 0.3;
+  const trunk = new THREE.MeshStandardMaterial({ color: 0x1b2340 }), crown = new THREE.MeshStandardMaterial({ color: 0x2f6f9f });
+  for (const [x, z] of [[-6, -4], [-9, 3], [5, -7], [8, 2], [-3, 8], [6, 7], [-11, -8], [11, -5]]) {
+    const t = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.4, 0.5), trunk), c = new THREE.Mesh(new THREE.BoxGeometry(2, 1.5, 2), crown);
+    t.position.set(x, 0.7, z); c.position.set(x, 2, z);
+    scene.add(t, c);
+  }
+  const under = new THREE.Mesh(new THREE.RingGeometry(0.72, 0.84, 32), new THREE.MeshBasicMaterial({ color: 0x96d9f5, side: THREE.DoubleSide }));
+  under.rotation.x = -Math.PI / 2;
+  under.position.y = 0.04;
+  player.add(under);
+}
+document.getElementById('slash').addEventListener('pointerdown', slash);
+
+function pop(text, world) {
+  const v = world.clone().project(camera);
+  const el = document.createElement('div');
+  el.className = 'pop';
+  el.textContent = text;
+  el.style.left = `${(v.x + 1) / 2 * innerWidth}px`;
+  el.style.top = `${(1 - v.y) / 2 * innerHeight}px`;
+  document.body.append(el);
+  setTimeout(() => el.remove(), 720);
+}
+
+function burst(at, count) {
+  const v = new THREE.Vector3();
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 5;
+    v.set(Math.cos(a) * s, 1 + Math.random() * 4.5, Math.sin(a) * s);
+    spawn(at, v, 0.35 + Math.random() * 0.4, 0.05 + Math.random() * 0.08);
+  }
+}
+
+function checkHit() {
+  const forward = new THREE.Vector3(-Math.sin(player.rotation.y), 0, -Math.cos(player.rotation.y));
+  let landed = 0;
+  for (const e of [...enemies]) {
+    const to = e.g.position.clone().sub(player.position).setY(0);
+    if (to.length() > reach + e.radius || to.clone().normalize().dot(forward) < COMBO[step].reach) continue;
+    landed++;
+    e.hp--; e.flash = 1;
+    e.knock.copy(to.normalize()).multiplyScalar(11);
+    const at = e.g.position.clone().setY(0.6);
+    burst(at, e.hp > 0 ? 14 : 30);
+    if (e.hp <= 0) {
+      combo = comboTimer > 0 ? combo + 1 : 1;
+      comboTimer = 1.8;
+      const mult = 1 + (combo - 1) * 0.2;
+      const gain = Math.round(e.score * mult);
+      score += gain; kills++;
+      pop(combo > 1 ? `+${gain} x${mult.toFixed(1)}` : `+${gain}`, at.clone().setY(1.8));
+      scene.remove(e.g);
+      enemies.splice(enemies.indexOf(e), 1);
+    }
+    ring.position.x = at.x; ring.position.z = at.z;
+    ringAge = 0;
+  }
+  if (landed) { didHit = true; hits += landed; stop = 0.07; shake = 0.22; }
+}
+
+function animateAttack(dt) {
+  if (rigged) {
+    if (attack >= 0) {
+      attack += dt;
+      if (!COMBO[step].cast && !didHit && attack > WINDUP + CUT * 0.45 && attack < WINDUP + CUT) checkHit();
+      // Chain as soon as this swing has finished cutting, so the combo flows.
+      if (queued && attack >= WINDUP + CUT + 0.04 && step < 2) startStep(step + 1);
+      else if (attack >= WINDUP + CUT + RECOVER) { attack = -1; queued = false; }
+    }
+    return;
+  }
+  let yaw = 0, raise = 0.75, phi = 0;
+  if (attack >= 0) {
+    attack += dt;
+    if (attack < WINDUP) {
+      const k = ease(attack / WINDUP);
+      yaw = -1.9 * k; raise = 0.75 + 0.8 * k; phi = 1.25 * k;
+    } else if (attack < WINDUP + CUT) {
+      const k = (attack - WINDUP) / CUT;
+      yaw = -1.9 + 3.9 * ease(k); raise = 1.55; phi = 1.25;
+      if (!didHit && k > 0.45) checkHit();
+    } else if (attack < WINDUP + CUT + RECOVER) {
+      const k = ease((attack - WINDUP - CUT) / RECOVER);
+      yaw = 2 * (1 - k); raise = 1.55 - 0.8 * k; phi = 1.25 * (1 - k);
+    } else {
+      attack = -1;
+    }
+  }
+  swing.rotation.y = yaw;
+  armR.rotation.x = raise;
+  holder.rotation.x = -raise - phi;  // cancels the arm, so phi 0 keeps the weapon upright
+  holder.rotation.y = Math.PI * (1 - phi / 1.25);  // at rest the blade faces outward, not behind the body
+  armL.rotation.x = attack >= 0 ? -0.5 : 0;
+}
+
+const a = new THREE.Vector3(), b = new THREE.Vector3();
+function updateTrail(dt) {
+  const cutting = attack >= WINDUP && attack < WINDUP + CUT + 0.04;
+  if (cutting) {
+    history.unshift({ a: tipPoint.getWorldPosition(a).clone(), b: innerPoint.getWorldPosition(b).clone(), age: 0 });
+    if (history.length > SEG) history.pop();
+  }
+  for (const h of history) h.age += dt;
+  while (history.length && history[history.length - 1].age > 0.2) history.pop();
+  trailPos.fill(0); trailCol.fill(0);
+  history.forEach((h, i) => {
+    const f = Math.max(0, 1 - h.age / 0.16) * (1 - i / SEG);
+    trailPos.set([h.a.x, h.a.y, h.a.z, h.b.x, h.b.y, h.b.z], i * 6);
+    trailCol.set([0.55 * f, 1.25 * f, 1.8 * f, 0, 0, 0], i * 6);  // bright at the tip, nothing at the inner edge
+  });
+  for (let i = history.length; i < SEG; i++) {
+    const last = history[history.length - 1];
+    if (last) trailPos.set([last.a.x, last.a.y, last.a.z, last.b.x, last.b.y, last.b.z], i * 6);
+  }
+  trailGeo.attributes.position.needsUpdate = true;
+  trailGeo.attributes.color.needsUpdate = true;
+}
+
+const partMatrix = new THREE.Matrix4(), scaleV = new THREE.Vector3(), quat = new THREE.Quaternion();
+function updateParts(dt) {
+  parts.forEach((q, i) => {
+    if (q.life > 0) {
+      q.life -= dt;
+      q.v.y -= 7 * dt;
+      q.p.addScaledVector(q.v, dt);
+      const floorY = MAP ? player.position.y + 0.05 : 0.05;
+      if (q.p.y < floorY) { q.p.y = floorY; q.v.y *= -0.3; }
+    }
+    const s = q.life > 0 ? q.size * Math.min(1, q.life / q.max * 2) : 0;
+    partMatrix.compose(q.p, quat, scaleV.setScalar(s));
+    cubes.setMatrixAt(i, partMatrix);
+  });
+  cubes.instanceMatrix.needsUpdate = true;
+}
+
+let walk = 0, idleSpark = 0, facing = 0, leanZ = 0, camYaw = 0, camPitch = 0.55, camDistance = 16.5, airborne = false, fallSpeed = 0;
+function jump() {
+  if (!MAP || airborne || over) return;
+  airborne = true;
+  fallSpeed = 9.6;
+}
+const UP = new THREE.Vector3(0, 1, 0);
+const rightOf = new THREE.Vector3(), vMove = new THREE.Vector3();
+const velocity = new THREE.Vector3();
+const heading = new THREE.Vector3();
+function update(dt) {
+  heading.set((keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), 0,
+    (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0));
+  if (TOP) {
+    marker.material.opacity = Math.max(0, marker.material.opacity - dt * 2);
+    if (heading.lengthSq() > 0) { moveTo = null; chase = null; }
+    if (chase && !enemies.includes(chase)) { chase = null; moveTo = null; }
+    if (chase) moveTo = chase.g.position;
+    if (moveTo) {
+      const gap = player.position.distanceTo(vMove.copy(moveTo).setY(0));
+      if (chase && gap < reach - 0.6) {
+        facing = Math.atan2(-(moveTo.x - player.position.x), -(moveTo.z - player.position.z));
+        heading.set(0, 0, 0);
+        if (Math.abs(Math.sin((facing - player.rotation.y) / 2)) < 0.25) slash();
+      } else if (gap < 0.15) {
+        moveTo = null;
+      } else {
+        heading.copy(vMove).sub(player.position).setY(0);
+      }
+    }
+  }
+  if (MAP) heading.applyAxisAngle(UP, camYaw);   // walk relative to the camera
+  if (over) heading.set(0, 0, 0);
+  const moving = heading.lengthSq() > 0;
+  if (moving) {
+    heading.normalize();
+    facing = Math.atan2(-heading.x, -heading.z);
+    walk += dt * 11;
+  }
+  // Ease speed and turning: most of the smooth feel lives here, not in the clips.
+  const top = attack >= 0 ? 1.4 : 4.2;
+  velocity.lerp(heading.multiplyScalar(top), 1 - Math.exp(-(moving ? 12 : 16) * dt));
+  if (MAP) {
+    const p = player.position, nx = p.x + velocity.x * dt, nz = p.z + velocity.z * dt;
+    if (world.canStand(nx, p.z, p.y)) p.x = nx; else velocity.x = 0;
+    if (world.canStand(p.x, nz, p.y)) p.z = nz; else velocity.z = 0;
+    const h = world.groundAt(p.x, p.z) ?? p.y;
+    if (airborne) {
+      fallSpeed -= 27 * dt;
+      p.y += fallSpeed * dt;
+      if (p.y <= h) {
+        p.y = h; airborne = false; fallSpeed = 0; shake = Math.max(shake, 0.05);
+        burst(p.clone().setY(h + 0.15), 8);
+      }
+    } else if (p.y - h > 0.8) {
+      airborne = true;                                            // walked off a higher ledge
+    } else {
+      p.y += (h - p.y) * (1 - Math.exp(-18 * dt));                // ease over stair steps
+    }
+  } else {
+    player.position.addScaledVector(velocity, dt).clampLength(0, 17);
+  }
+  const turn = Math.atan2(Math.sin(facing - player.rotation.y), Math.cos(facing - player.rotation.y));
+  player.rotation.y += turn * (1 - Math.exp(-16 * dt));
+  if (rigged) {
+    if (attack < 0) playClip(airborne && clips.Jump ? 'Jump' : velocity.length() > 0.5 ? 'Walk' : 'Idle', airborne ? 0.08 : 0.14);
+    clips.Walk.timeScale = Math.max(velocity.length() / 3.6, 0.5);
+    mixer.update(dt);
+    // Lean into speed and turns: the body lags and tips like a weight on a spring.
+    const side = velocity.dot(rightOf.set(Math.cos(player.rotation.y), 0, -Math.sin(player.rotation.y)));
+    leanZ += (-side * 0.05 - turn * 0.45 - leanZ) * (1 - Math.exp(-10 * dt));
+    lean.rotation.z = leanZ;
+    updateSprings(dt);
+    solveArms();
+  }
+  const stride = moving ? Math.sin(walk) * 0.6 : 0;
+  legL.rotation.x = stride; legR.rotation.x = -stride;
+  if (attack < 0) armL.rotation.x = -stride * 0.7;
+
+  animateAttack(dt);
+  pulse.value += dt * 1.1;
+  if (pulse.value > 2.6) pulse.value = -0.4;
+
+  hurt -= dt;
+  for (const e of enemies) {
+    const to = player.position.clone().sub(e.g.position).setY(0);
+    const dist = to.length();
+    to.normalize();
+    const ox = e.g.position.x, oz = e.g.position.z;
+    e.g.position.addScaledVector(to, e.speed * dt).addScaledVector(e.knock, dt);
+    if (MAP) {   // enemies stay on solid ground
+      const h = world.groundAt(e.g.position.x, e.g.position.z);
+      if (h === null || Math.abs(h - e.g.position.y) > 1.3) { e.g.position.x = ox; e.g.position.z = oz; } else e.g.position.y = h;
+    }
+    e.knock.multiplyScalar(Math.exp(-8 * dt));
+    e.g.rotation.y = Math.atan2(-to.x, -to.z);
+    e.hop += dt * 9;
+    e.shell.position.y = e.radius + Math.abs(Math.sin(e.hop)) * 0.22;
+    e.flash = Math.max(0, e.flash - dt * 6);
+    e.shell.material.emissive.setRGB(e.flash * 2, e.flash * 3, e.flash * 4);
+    if (dist < 0.75 + e.radius && hurt <= 0 && !over) {
+      hp--; hurt = 0.9; shake = 0.3;
+      e.knock.copy(to).multiplyScalar(-9);
+      if (hp <= 0) endGame();
+    }
+  }
+  if (!enemies.length && !over) {
+    wave++;
+    for (let i = 0; i < 2 + wave * 2; i++) addEnemy(wave);
+    if (wave > 1) pop(`เวฟ ${wave}`, player.position.clone().setY(3));
+  }
+  body.visible = hurt < 0.6 || Math.floor(hurt * 16) % 2 === 0;
+
+  ringAge += dt;
+  const rk = Math.min(ringAge / 0.4, 1);
+  ring.scale.setScalar(0.3 + 3 * ease(rk));
+  ringMat.opacity = 1 - rk;
+
+  comboTimer -= dt;
+  document.getElementById('hud').textContent = `เลือด ${'■'.repeat(Math.max(hp, 0))}   คะแนน ${score}   เวฟ ${wave}   ${cooldownText()}`;
+  document.getElementById('combo').textContent = comboTimer > 0 && combo > 1 ? `คอมโบ ${combo}` : '';
+
+  idleSpark -= dt;
+  if (ready && idleSpark < 0) {
+    idleSpark = 0.09;
+    tipPoint.getWorldPosition(a).lerp(innerPoint.getWorldPosition(b), Math.random());
+    spawn(a, b.set((Math.random() - 0.5) * 0.3, 0.9, (Math.random() - 0.5) * 0.3), 0.7, 0.03);
+  }
+  if (MAP) world.update(dt, player.position);
+  runFx(dt);
+  updateTrail(dt);
+  updateParts(dt);
+}
+
+function endGame() {
+  over = true;
+  document.getElementById('final').textContent = `คะแนน ${score} · กำจัด ${kills} ตัว · ถึงเวฟ ${wave}`;
+  document.getElementById('over').style.display = 'grid';
+}
+
+function restart() {
+  for (const e of enemies) scene.remove(e.g);
+  enemies.length = 0;
+  hp = 5; score = 0; kills = 0; wave = 0; combo = 0; comboTimer = 0; hurt = 0; over = false; attack = -1;
+  player.position.copy(MAP ? world.spawn : new THREE.Vector3());
+  document.getElementById('over').style.display = 'none';
+}
+document.getElementById('over').addEventListener('pointerdown', restart);
+
+// Skill VFX, built from real cubes. The voxel concept sheet is a shape reference only.
+const ICE = [0x101a44, 0x20397a, 0x3e6cc0, 0x62aee8, 0x9ad9f7, 0xffffff].map((c) => new THREE.Color(c));
+const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+const cM = new THREE.Matrix4(), cS = new THREE.Vector3(), cP = new THREE.Vector3(), cQ = new THREE.Quaternion();
+function voxelCloud(items, glowLevel = 0.8) {
+  const material = new THREE.MeshStandardMaterial({ roughness: 0.55, emissive: 0x16356e, emissiveIntensity: glowLevel });
+  const mesh = new THREE.InstancedMesh(cubeGeometry, material, items.length);
+  mesh.frustumCulled = false;
+  items.forEach((item, n) => mesh.setColorAt(n, ICE[item.c]));
+  const apply = (fn) => {
+    items.forEach((item, n) => {
+      cP.copy(item.p);
+      const size = fn(item, cP);
+      cM.compose(cP, cQ, cS.setScalar(Math.max(size, 0.0001)));
+      mesh.setMatrixAt(n, cM);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  };
+  return { mesh, apply };
+}
+const vox = (x, y, z, size, c, extra = {}) => ({ p: new THREE.Vector3(x, y, z), size, c, r: Math.random(), ...extra });
+const fx = [];
+const cooldown = { 1: 0, 2: 0, 3: 0 };
+const dimmer = document.createElement('div');
+dimmer.style.cssText = 'position:fixed;inset:0;background:#02040e;opacity:0;pointer-events:none';
+document.body.append(dimmer);
+const cooldownText = () => [1, 2, 3].map((n) => (cooldown[n] > 0 ? `[${n}: ${cooldown[n].toFixed(0)}]` : `[${n}]`)).join(' ');
+const facingDir = () => new THREE.Vector3(-Math.sin(player.rotation.y), 0, -Math.cos(player.rotation.y));
+
+function damage(e, from, power = 8) {
+  if (!enemies.includes(e)) return;
+  const dir = e.g.position.clone().sub(from).setY(0).normalize();
+  e.hp--; e.flash = 1;
+  e.knock.copy(dir).multiplyScalar(power);
+  const at = e.g.position.clone().setY(0.6);
+  burst(at, e.hp > 0 ? 10 : 24);
+  hits++;
+  if (e.hp <= 0) {
+    combo = comboTimer > 0 ? combo + 1 : 1;
+    comboTimer = 1.8;
+    const gain = Math.round(e.score * (1 + (combo - 1) * 0.2));
+    score += gain; kills++;
+    pop(`+${gain}`, at.clone().setY(1.8));
+    scene.remove(e.g);
+    enemies.splice(enemies.indexOf(e), 1);
+  }
+}
+
+// 2D layers from the user's element sheets, sitting on the 3D effects. Black adds nothing.
+const layerTextures = Object.fromEntries(['rim', 'speed', 'trail', 'wind_ring', 'wind_swirl', 'seal', 'snow_spiral', 'frost_mark',
+  'eclipse', 'shock', 'rays', 'crack', 'star'].map((n) => {
+  const t = new THREE.TextureLoader().load(`assets/vfx2d/${n}.png?t=${Date.now()}`);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return [n, t];
+}));
+// 3D stands alone first. Press V to compare with the 2D layers.
+let show2d = true;
+const activeLayers = new Set();
+function track(mesh) { mesh.visible = show2d; activeLayers.add(mesh); return mesh; }
+const layerMaterial = (name, strength) => new THREE.MeshBasicMaterial({ map: layerTextures[name], color: new THREE.Color(strength, strength, strength),
+  transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+function flatLayer(name, w, h, strength = 0.8) {
+  return track(new THREE.Mesh(new THREE.PlaneGeometry(w, h).rotateX(-Math.PI / 2), layerMaterial(name, strength)));
+}
+function faceLayer(name, size, strength = 0.9) {
+  const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: layerTextures[name], color: new THREE.Color(strength, strength, strength), transparent: true,
+    opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  m.scale.setScalar(size);
+  return track(m);
+}
+
+// Sculpted and keyframed in Blender (voxel-vfx/build_frost_crescent.py), played as real 3D.
+let crescent = null;
+new GLTFLoader().load(`assets/vfx_frost_crescent.glb?t=${Date.now()}`, (gltf) => {
+  gltf.scene.visible = false;
+  scene.add(gltf.scene);
+  const mixer = new THREE.AnimationMixer(gltf.scene);
+  // Blender exports one animation per cube, so merge them into a single clip.
+  const clip = new THREE.AnimationClip('FrostCrescent', -1, gltf.animations.flatMap((a) => a.tracks));
+  const action = mixer.clipAction(clip);
+  action.setLoop(THREE.LoopOnce, 1);
+  action.clampWhenFinished = true;
+  action.timeScale = 1.25;
+  crescent = { model: gltf.scene, mixer, action, length: clip.duration / 1.25 };
+});
+function frostCrescent() {
+  if (!crescent) return;
+  const { model, mixer, action, length } = crescent;
+  const dir = facingDir(), start = player.position.clone().addScaledVector(dir, 1.5);
+  start.y += 0.25;
+  model.rotation.y = player.rotation.y;
+  model.position.copy(start);
+  let wait = WINDUP;               // the wave leaves on the swing, not on the key press
+  // Accents from voxel-vfx/vfx-timing.md: a brief speed flash, then a fading ground mark.
+  const speed = flatLayer('speed', 7, 3.2, 0.32), trail = flatLayer('trail', 7, 15, 0.3);
+  speed.geometry.rotateY(-Math.PI / 2);
+  speed.position.set(0, 0.8, 0.6);   // just behind the wave, clear of the player
+  model.add(speed);
+  trail.position.copy(player.position).addScaledVector(dir, 8);
+  trail.position.y += 0.07;
+  trail.rotation.y = player.rotation.y;
+  scene.add(trail);
+  fx.push(fadeOut(trail, 0.7, 1, 0.7));
+  const struck = new Set();
+  let t = 0;
+  fx.push((dt) => {
+    if (wait > 0) {
+      wait -= dt;
+      if (wait <= 0) { model.visible = true; action.reset().play(); }
+      return true;
+    }
+    t += dt;
+    mixer.update(dt);
+    const k = t / length;
+    speed.material.opacity = t < 0.15 ? Math.sin(Math.PI * t / 0.15) : 0;
+    model.position.copy(start).addScaledVector(dir, (1 - (1 - Math.min(k, 1)) ** 2.2) * 14);
+    for (const e of [...enemies]) {
+      if (!struck.has(e) && Math.hypot(e.g.position.x - model.position.x, e.g.position.z - model.position.z) < 4) { struck.add(e); damage(e, player.position, 12); shake = 0.14; }
+    }
+    if (k < 1) return true;
+    model.visible = false;
+    model.remove(speed);
+    activeLayers.delete(speed);
+    return false;
+  });
+}
+function fadeOut(mesh, life, peak, delay = 0) {
+  let t = -delay;
+  return (dt) => {
+    t += dt;
+    if (t < 0) return true;
+    mesh.material.opacity = peak * Math.min(t / 0.12, 1) * Math.max(0, 1 - t / life);
+    if (t < life) return true;
+    scene.remove(mesh);
+    activeLayers.delete(mesh);
+    return false;
+  };
+}
+
+// Sculpted and keyframed in Blender (voxel-vfx/build_blizzard_vortex.py), played as real 3D.
+let vortex = null;
+new GLTFLoader().load(`assets/vfx_blizzard_vortex.glb?t=${Date.now()}`, (gltf) => {
+  gltf.scene.visible = false;
+  scene.add(gltf.scene);
+  const mixer = new THREE.AnimationMixer(gltf.scene);
+  const clip = new THREE.AnimationClip('BlizzardVortex', -1, gltf.animations.flatMap((a) => a.tracks));
+  const action = mixer.clipAction(clip);
+  action.setLoop(THREE.LoopOnce, 1);
+  action.clampWhenFinished = true;
+  vortex = { model: gltf.scene, mixer, action, length: clip.duration };
+});
+function blizzardVortex() {
+  if (!vortex) return;
+  const { model, mixer, action, length } = vortex;
+  const centre = player.position.clone().addScaledVector(facingDir(), 4.5);
+  model.position.copy(centre);
+  model.visible = true;
+  action.reset().play();
+  // Accents from voxel-vfx/vfx-timing.md: seal at the start, two wind flashes, a mark at the end.
+  const seal = flatLayer('seal', 11, 11, 0.45), wind = flatLayer('wind_ring', 11, 11, 0.3), mark = flatLayer('frost_mark', 12, 12, 0.25);
+  seal.position.y = 0.1; wind.position.y = 1.7; mark.position.y = 0.06;
+  const layers = [seal, wind, mark];
+  layers.forEach((m) => { m.position.add(centre); scene.add(m); });
+  let t = 0, tick = 0.4;
+  fx.push((dt) => {
+    t += dt;
+    mixer.update(dt);
+    const flash = (at, life) => (t >= at && t < at + life ? Math.sin(Math.PI * (t - at) / life) : 0);
+    seal.material.opacity = t < 0.35 ? Math.sin(Math.PI * t / 0.35) : 0;
+    wind.material.opacity = flash(0.9, 0.18) + flash(1.6, 0.18);
+    mark.material.opacity = t > 2.35 ? Math.min((t - 2.35) / 0.1, 1) * Math.max((length - t) / 0.35, 0) : 0;
+    seal.rotation.y += dt * 0.8;
+    wind.rotation.y -= dt * 4.5;
+    tick -= dt;
+    for (const e of [...enemies]) {
+      const to = centre.clone().sub(e.g.position).setY(0);
+      if (to.length() < 5.2) {
+        e.g.position.addScaledVector(to.normalize(), dt * 4);
+        if (tick <= 0) damage(e, centre, 0);
+      }
+    }
+    if (tick <= 0) tick = 0.55;
+    if (t < length) return true;
+    model.visible = false;
+    scene.remove(...layers);
+    layers.forEach((m) => activeLayers.delete(m));
+    return false;
+  });
+}
+
+// Sculpted and keyframed in Blender (voxel-vfx/build_winter_eclipse.py), played as real 3D.
+let eclipse = null;
+new GLTFLoader().load(`assets/vfx_winter_eclipse.glb?t=${Date.now()}`, (gltf) => {
+  gltf.scene.visible = false;
+  scene.add(gltf.scene);
+  const mixer = new THREE.AnimationMixer(gltf.scene);
+  const clip = new THREE.AnimationClip('WinterEclipse', -1, gltf.animations.flatMap((a) => a.tracks));
+  const action = mixer.clipAction(clip);
+  action.setLoop(THREE.LoopOnce, 1);
+  action.clampWhenFinished = true;
+  eclipse = { model: gltf.scene, mixer, action, length: clip.duration };
+});
+function winterEclipse() {
+  if (!eclipse) return;
+  const IMPACT = 33 / 24;
+  const { model, mixer, action, length } = eclipse;
+  const centre = player.position.clone().addScaledVector(facingDir(), 3);
+  model.position.copy(centre);
+  model.visible = true;
+  action.reset().play();
+  // The ultimate's only 2D: a short anime hit at impact, then a crack left on the ground.
+  const star = faceLayer('star', 9, 0.9), shock = flatLayer('shock', 8, 8, 0.65), crack = flatLayer('crack', 11, 11, 0.5);
+  const impactLayers = [star, shock, crack];
+  impactLayers.forEach((m) => { m.visible = true; activeLayers.delete(m); m.position.copy(centre); scene.add(m); });
+  star.position.y += 2.2; shock.position.y += 0.34; crack.position.y += 0.2;
+  let t = 0, landed = false;
+  fx.push((dt) => {
+    t += dt;
+    mixer.update(dt);
+    dimmer.style.background = t < IMPACT ? '#02040e' : '#bfe8ff';
+    dimmer.style.opacity = t < IMPACT ? Math.min(t / 0.45, 1) * 0.62 : Math.max(0, 0.22 * (1 - (t - IMPACT) / 0.16));
+    if (t >= IMPACT && !landed) {
+      landed = true;
+      stop = 0.12; shake = 0.55;
+      for (const e of [...enemies]) if (e.g.position.distanceTo(centre) < 6.5) { damage(e, centre, 16); if (enemies.includes(e)) damage(e, centre, 16); }
+    }
+    if (landed) {
+      const age = t - IMPACT;
+      star.material.opacity = Math.max(0, 1 - age / 0.18);
+      shock.material.opacity = Math.max(0, 0.9 - age / 0.5);
+      shock.scale.setScalar(1 + age * 4);
+      crack.material.opacity = Math.min(age / 0.08, 1) * Math.min(Math.max((length - t) / 0.4, 0), 1);
+    }
+    if (t < length) return true;
+    model.visible = false;
+    scene.remove(...impactLayers);
+    dimmer.style.opacity = 0;
+    return false;
+  });
+}
+
+function castSkill(n) {
+  // [effect, cooldown, combo entry, delay until the effect starts]
+  const skill = { 1: [frostCrescent, 1.4, 0, 0], 2: [blizzardVortex, 7, 3, 9 / 24], 3: [winterEclipse, 14, 4, 0] }[n];
+  if (!skill || !ready || over || cooldown[n] > 0) return;
+  cooldown[n] = skill[1];
+  startStep(skill[2]);
+  let wait = skill[3];                  // Vortex starts when the scythe is planted
+  fx.push((dt) => {
+    wait -= dt;
+    if (wait > 0) return true;
+    skill[0]();
+    return false;
+  });
+}
+
+function runFx(dt) {
+  for (const n of [1, 2, 3]) cooldown[n] = Math.max(0, cooldown[n] - dt);
+  for (let i = fx.length - 1; i >= 0; i--) if (!fx[i](dt)) fx.splice(i, 1);
+}
+
+function resize() {
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.fov = camera.aspect < 0.8 ? 62 : (TOP ? 36 : MAP ? 50 : 45);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+if (MAP) {
+  player.position.copy(world.spawn);
+  follow0();
+  document.getElementById('help').innerHTML = 'WASD: เดิน<br>Space: กระโดด<br>กดเมาส์ขวาลาก: หมุนกล้อง<br>ลูกกลิ้ง: ซูม<br>คลิก: ฟัน<br>1, 2, 3: สกิล<br>V: เปิดปิดชั้น 2D';
+  addEventListener('contextmenu', (e) => e.preventDefault());
+  addEventListener('pointermove', (e) => {
+    if (!(e.buttons & 2)) return;
+    camYaw -= e.movementX * 0.006;
+    camPitch = THREE.MathUtils.clamp(camPitch + e.movementY * 0.005, 0.06, 1.4);
+  });
+  addEventListener('wheel', (e) => { camDistance = THREE.MathUtils.clamp(camDistance + e.deltaY * 0.015, 6, 34); }, { passive: true });
+}
+function follow0() { queueMicrotask(() => follow.copy(player.position)); }
+const clock = new THREE.Clock();
+const look = new THREE.Vector3(), follow = new THREE.Vector3();
+function frame() {
+  const real = Math.min(clock.getDelta(), 0.05);
+  if (stop > 0) stop -= real; else update(real);   // hit-stop freezes the action, not the camera shake
+  shake = Math.max(0, shake - real);
+  follow.lerp(player.position, 1 - Math.exp(-8 * real));
+  if (keys.KeyQ) camYaw += real * 1.8;
+  if (keys.KeyE) camYaw -= real * 1.8;
+  look.copy(follow).setY(MAP ? follow.y + 2 : 1.1);
+  if (MAP) {
+    const flat = Math.cos(camPitch) * camDistance;
+    camera.position.set(follow.x + Math.sin(camYaw) * flat, follow.y + 2 + Math.sin(camPitch) * camDistance, follow.z + Math.cos(camYaw) * flat);
+  }
+  else camera.position.set(follow.x, TOP ? 15 : 5, follow.z + (TOP ? 11.7 : 7.2));
+  camera.position.x += (Math.random() - 0.5) * shake * 0.7;
+  camera.position.y += (Math.random() - 0.5) * shake * 0.7;
+  camera.lookAt(look);
+  composer.render();
+  requestAnimationFrame(frame);
+}
+frame();
+
+// Debug: render the current pose from a chosen camera position, returning an image.
+function snap(x, y, z) {
+  camera.position.set(player.position.x + x, y, player.position.z + z);
+  camera.lookAt(player.position.x, 1.15, player.position.z);
+  composer.render();
+  return renderer.domElement;
+}
+window.__demo = { get activeLayers() { return activeLayers; }, get crescent() { return crescent; }, get vortex() { return vortex; }, get eclipse() { return eclipse; }, jump, camera, setCam(y, p, d) { camYaw = y; camPitch = p; camDistance = d; }, get airborne() { return airborne; }, world, get camYaw() { return camYaw; }, set camYaw(v) { camYaw = v; }, castSkill, clickWorld, springs: () => springs, snap, keys, playClip, slash, update, enemies, player, stats: () => ({ ready, slashes, hits, combo, hp, score, kills, wave, over, attack, step, rigged, clip: currentClip?.getClip().name }) };
+</script>
+</body>
+</html>

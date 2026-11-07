@@ -1,0 +1,9 @@
+{
+  "id": "character_hero_frost_reaper_01",
+  "type": "character",
+  "rig": "biped_hero",
+  "model": "../../web-prototype/assets/voxel_character_rigged.glb",
+  "source": "original, from the user's generated turnaround sheet",
+  "equips": ["weapon_scythe_frost_01"],
+  "vfx": []
+}

@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "web-prototype", "runtimeExecutable": "python", "runtimeArgs": ["-m", "http.server", "8123", "--directory", "web-prototype"], "port": 8123 },
+    { "name": "asset-library", "runtimeExecutable": "python", "runtimeArgs": ["-m", "http.server", "8124"], "port": 8124 }
+  ]
+}

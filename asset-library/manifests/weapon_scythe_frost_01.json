@@ -1,0 +1,9 @@
+{
+  "id": "weapon_scythe_frost_01",
+  "type": "weapon",
+  "class": "polearm",
+  "model": "../../web-prototype/assets/voxel_weapon.glb",
+  "source": "original, from the user's generated concept",
+  "sockets": {"Grip_R": [0, 0, 0], "Grip_L": [0, -0.45, 0], "Tip": [-0.72, 0.33, 0]},
+  "vfx": ["vfx_weapon_slash_frost_01"]
+}

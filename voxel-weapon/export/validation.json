@@ -1,0 +1,76 @@
+{
+ "file_kb": 962,
+ "objects": 3,
+ "triangles": 12456,
+ "size_m": [
+  1.215,
+  0.105,
+  1.92
+ ],
+ "origin_inside_bounds": true,
+ "normals_outward": true,
+ "base_colour_textured": true,
+ "emission_textured": true,
+ "emission_strength": 2.6,
+ "images": [
+  {
+   "name": "T_Emission",
+   "size": [
+    5,
+    1
+   ]
+  },
+  {
+   "name": "T_Palette",
+   "size": [
+    5,
+    1
+   ]
+  },
+  {
+   "name": "Viewer Node",
+   "size": [
+    256,
+    256
+   ]
+  }
+ ],
+ "parts": [
+  {
+   "name": "FloatingShard_2",
+   "triangles": 68,
+   "signed_volume": 3e-05,
+   "uv_sets": [
+    "UVMap",
+    "UVMap.001"
+   ],
+   "materials": [
+    "M_Voxel"
+   ]
+  },
+  {
+   "name": "FloatingShard_3",
+   "triangles": 52,
+   "signed_volume": 2.4e-05,
+   "uv_sets": [
+    "UVMap",
+    "UVMap.001"
+   ],
+   "materials": [
+    "M_Voxel"
+   ]
+  },
+  {
+   "name": "Weapon",
+   "triangles": 12336,
+   "signed_volume": 0.015046,
+   "uv_sets": [
+    "UVMap",
+    "UVMap.001"
+   ],
+   "materials": [
+    "M_Voxel"
+   ]
+  }
+ ]
+}

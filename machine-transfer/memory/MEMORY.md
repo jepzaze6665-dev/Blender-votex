@@ -1,0 +1,5 @@
+- [Voxel game workflow](voxel-game-workflow.md) — Thai-speaking Blender beginner; plan first when asked; relevant skills
+- [Review camera](top-down-review.md) — map work uses wide third person, top-down via ?view=top; references are guides; this folder is graphics only
+- [Boss status](voxel-boss-status.md) — dragon approved, PC target, small monsters deferred
+- [Reference before sculpt](reference-before-sculpt.md) — ask for generated refs and give prompts before any new model
+- [Style lock](voxel-style-lock.md) — core style locked, colour varies by area; see voxel-style skill

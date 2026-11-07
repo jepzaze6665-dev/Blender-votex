@@ -1,0 +1,11 @@
+{
+  "id": "vfx_skill_frost_crescent_01",
+  "type": "vfx",
+  "kind": "projectile",
+  "attach": "Ground",
+  "built_with": "Blender keyframed voxel cubes, voxel-vfx/build_frost_crescent.py",
+  "reference": "assets/from-user/vfx-voxel-concept.webp",
+  "source": "original Blender VFX, using the user's concept as a shape reference",
+  "model": "../../web-prototype/assets/vfx_frost_crescent.glb",
+  "layers_2d": "assets/from-user/vfx2d-crescent.png"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "character_boss_ice_dragon_01",
+  "type": "character",
+  "rig": "dragon_boss",
+  "model": "../../web-prototype/assets/voxel_dragon_rigged.glb",
+  "source": "original, sculpted part by part in voxel-dragon/build_dragon.py",
+  "reference": "assets/from-user/dragon-turnaround.webp"
+}

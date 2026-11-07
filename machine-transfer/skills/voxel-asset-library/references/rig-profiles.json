@@ -1,0 +1,173 @@
+{
+  "biped_hero": {
+    "bones": [
+      "Root",
+      "Hips",
+      "Torso",
+      "Head",
+      "ArmR",
+      "ForeR",
+      "Hand_R",
+      "ArmL",
+      "ForeL",
+      "Hand_L",
+      "LegR",
+      "FootR",
+      "LegL",
+      "FootL",
+      "Swing",
+      "Weapon"
+    ],
+    "optional": [
+      "PadR",
+      "PadL",
+      "SkirtF",
+      "SkirtB",
+      "SkirtR",
+      "SkirtL"
+    ],
+    "clips": [
+      "Idle",
+      "Walk",
+      "Slash"
+    ],
+    "max_triangles": 60000
+  },
+  "biped_simple": {
+    "bones": [
+      "Root",
+      "Hips",
+      "Torso",
+      "Head",
+      "ArmR",
+      "Hand_R",
+      "ArmL",
+      "Hand_L",
+      "LegR",
+      "LegL"
+    ],
+    "optional": [
+      "FootR",
+      "FootL"
+    ],
+    "clips": [
+      "Idle",
+      "Walk"
+    ],
+    "max_triangles": 25000
+  },
+  "quadruped": {
+    "bones": [
+      "Root",
+      "Body",
+      "Head",
+      "LegFR",
+      "LegFL",
+      "LegBR",
+      "LegBL"
+    ],
+    "optional": [
+      "Tail"
+    ],
+    "clips": [
+      "Idle",
+      "Walk"
+    ],
+    "max_triangles": 25000
+  },
+  "flyer": {
+    "bones": [
+      "Root",
+      "Body",
+      "Head",
+      "WingR",
+      "WingL"
+    ],
+    "optional": [
+      "Tail"
+    ],
+    "clips": [
+      "Idle",
+      "Fly"
+    ],
+    "max_triangles": 20000
+  },
+  "biped_block": {
+    "bones": [
+      "Root",
+      "Body",
+      "Head",
+      "Hand_R",
+      "Hand_L",
+      "FootR",
+      "FootL",
+      "Swing",
+      "Weapon"
+    ],
+    "optional": [
+      "Cape",
+      "PadR",
+      "PadL"
+    ],
+    "clips": [
+      "Idle",
+      "Walk",
+      "Slash1",
+      "Slash2",
+      "Slash3"
+    ],
+    "max_triangles": 30000
+  },
+  "dragon_boss": {
+    "bones": [
+      "Root",
+      "Body",
+      "Core",
+      "Neck1",
+      "Neck2",
+      "Neck3",
+      "Head",
+      "Jaw",
+      "Crown",
+      "Tail1",
+      "Tail2",
+      "Tail3",
+      "Tail4",
+      "Tail5",
+      "Tail6",
+      "FrontUpperR",
+      "FrontLowerR",
+      "FrontFootR",
+      "HindUpperR",
+      "HindLowerR",
+      "HindFootR",
+      "WingArmR",
+      "WingForeR",
+      "WingPanelR",
+      "FrontUpperL",
+      "FrontLowerL",
+      "FrontFootL",
+      "HindUpperL",
+      "HindLowerL",
+      "HindFootL",
+      "WingArmL",
+      "WingForeL",
+      "WingPanelL"
+    ],
+    "optional": [],
+    "clips": [
+      "Idle",
+      "Walk",
+      "Roar",
+      "Hit",
+      "Death",
+      "Bite",
+      "Claw",
+      "TailSwipe",
+      "FrostBreath",
+      "WingGust",
+      "Intro"
+    ],
+    "max_triangles": 120000
+  }
+}

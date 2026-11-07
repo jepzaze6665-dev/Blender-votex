@@ -1,0 +1,391 @@
+{
+ "video": {
+  "file": "126d1b67-26c1-4924-aeca-9cfbcd7fe402.mp4",
+  "size_mb": 2.62,
+  "container": "mov,mp4,m4a,3gp,3g2,mj2",
+  "duration_sec": 22.867,
+  "width": 576,
+  "height": 1252,
+  "fps": 30.0,
+  "variable_frame_rate": false,
+  "video_codec": "h264",
+  "pix_fmt": "yuv420p",
+  "may_have_alpha": false,
+  "has_audio": true,
+  "audio_codec": "aac"
+ },
+ "active_region": {
+  "x": 0,
+  "y": 162,
+  "w": 576,
+  "h": 806,
+  "note": "measurements and frames use this area; see frames/full_frame"
+ },
+ "scan": {
+  "frames_decoded": 686,
+  "analysis_fps": 30.0,
+  "reduced_rate": false,
+  "cut_threshold": 0.35
+ },
+ "shots": [
+  {
+   "id": 1,
+   "start": 0.0,
+   "end": 8.1,
+   "duration": 8.1,
+   "mean_change": 0.0063,
+   "camera_hint": "shake or handheld",
+   "camera_speed": 0.059,
+   "zoom_per_sec": 0.005,
+   "subject_motion": 0.078,
+   "typical_hold_frames": 1,
+   "effective_fps": 30.0
+  },
+  {
+   "id": 2,
+   "start": 8.1,
+   "end": 10.433,
+   "duration": 2.333,
+   "mean_change": 0.0055,
+   "camera_hint": "locked or nearly static",
+   "camera_speed": 0.007,
+   "zoom_per_sec": 0.001,
+   "subject_motion": 0.06,
+   "typical_hold_frames": 1,
+   "effective_fps": 30.0
+  },
+  {
+   "id": 3,
+   "start": 10.433,
+   "end": 16.767,
+   "duration": 6.333,
+   "mean_change": 0.0227,
+   "camera_hint": "pan/track vertical",
+   "camera_speed": 0.071,
+   "zoom_per_sec": -0.012,
+   "subject_motion": 0.288,
+   "typical_hold_frames": 1,
+   "effective_fps": 30.0
+  },
+  {
+   "id": 4,
+   "start": 16.767,
+   "end": 17.033,
+   "duration": 0.267,
+   "mean_change": 0.0512,
+   "camera_hint": "pull-out",
+   "camera_speed": 0.125,
+   "zoom_per_sec": -0.156,
+   "subject_motion": 2.985,
+   "typical_hold_frames": 1,
+   "effective_fps": 30.0
+  },
+  {
+   "id": 5,
+   "start": 17.033,
+   "end": 18.267,
+   "duration": 1.233,
+   "mean_change": 0.0491,
+   "camera_hint": "pan/track horizontal",
+   "camera_speed": 0.127,
+   "zoom_per_sec": -0.018,
+   "subject_motion": 0.795,
+   "typical_hold_frames": 1,
+   "effective_fps": 30.0
+  },
+  {
+   "id": 6,
+   "start": 18.267,
+   "end": 22.233,
+   "duration": 3.967,
+   "mean_change": 0.0419,
+   "camera_hint": "pan/track vertical",
+   "camera_speed": 0.224,
+   "zoom_per_sec": 0.032,
+   "subject_motion": 0.567,
+   "typical_hold_frames": 1,
+   "effective_fps": 30.0
+  },
+  {
+   "id": 7,
+   "start": 22.233,
+   "end": 22.867,
+   "duration": 0.633,
+   "mean_change": 0.0404,
+   "camera_hint": "pan/track vertical",
+   "camera_speed": 0.557,
+   "zoom_per_sec": -0.053,
+   "subject_motion": 0.066,
+   "typical_hold_frames": 1,
+   "effective_fps": 30.0
+  }
+ ],
+ "shots_note": null,
+ "shot_count": 7,
+ "mean_shot_seconds": 3.27,
+ "flashes_sec": [],
+ "motion_peaks_sec": [
+  11.8,
+  13.133,
+  16.867,
+  17.3,
+  18.2,
+  18.467,
+  19.267,
+  20.267,
+  21.4,
+  21.667,
+  22.0,
+  22.5
+ ],
+ "frame_holds": {
+  "repeated_frame_share": 0.105,
+  "typical_hold_frames": 1,
+  "hold_distribution": {
+   "1": 583,
+   "2": 19,
+   "3": 6,
+   "4": 1,
+   "6": 1,
+   "8": 1
+  },
+  "effective_fps_estimate": 30.0
+ },
+ "loop": {
+  "first_last_difference": 0.1908,
+  "typical_frame_difference": 0.0118,
+  "starts_and_ends_empty": false,
+  "looks_seamless": false
+ },
+ "style": {
+  "palette": [
+   {
+    "hex": "#01020d",
+    "share": 0.163
+   },
+   {
+    "hex": "#181d31",
+    "share": 0.144
+   },
+   {
+    "hex": "#262940",
+    "share": 0.136
+   },
+   {
+    "hex": "#cae3ef",
+    "share": 0.134
+   },
+   {
+    "hex": "#3564a8",
+    "share": 0.126
+   },
+   {
+    "hex": "#79bde7",
+    "share": 0.118
+   },
+   {
+    "hex": "#6073a4",
+    "share": 0.1
+   },
+   {
+    "hex": "#09102c",
+    "share": 0.078
+   }
+  ],
+  "accent_palette": [
+   {
+    "hex": "#142352",
+    "share": 0.269
+   },
+   {
+    "hex": "#527fc4",
+    "share": 0.25
+   },
+   {
+    "hex": "#465ea1",
+    "share": 0.152
+   },
+   {
+    "hex": "#67b9e9",
+    "share": 0.147
+   },
+   {
+    "hex": "#96d9f5",
+    "share": 0.118
+   },
+   {
+    "hex": "#2c477d",
+    "share": 0.064
+   }
+  ],
+  "mean_saturation": 0.527,
+  "mean_brightness": 0.48,
+  "median_unique_colours_per_frame": 61628,
+  "pixel_block_size": 1,
+  "native_pixel_size_estimate": null,
+  "low_resolution_source": false
+ },
+ "audio": {
+  "present": true,
+  "silent": false,
+  "peak_db": 0.0,
+  "mean_db": -17.8,
+  "share_of_quiet_time": 0.033,
+  "onsets_sec": [
+   0.1,
+   0.85,
+   6.6
+  ]
+ },
+ "audio_hits_matching_visual_events_sec": [],
+ "sheets": [
+  "sheets/sheet_01.jpg",
+  "sheets/sheet_02.jpg",
+  "sheets/sheet_03.jpg"
+ ],
+ "frames": [
+  {
+   "file": "frames/f001_0000.040s.png",
+   "time": 0.04,
+   "label": "S1 first"
+  },
+  {
+   "file": "frames/f002_0004.050s.png",
+   "time": 4.05,
+   "label": "S1 mid"
+  },
+  {
+   "file": "frames/f003_0008.020s.png",
+   "time": 8.02,
+   "label": "S1 last"
+  },
+  {
+   "file": "frames/f004_0008.140s.png",
+   "time": 8.14,
+   "label": "S2 first"
+  },
+  {
+   "file": "frames/f005_0009.267s.png",
+   "time": 9.267,
+   "label": "S2 mid"
+  },
+  {
+   "file": "frames/f006_0010.353s.png",
+   "time": 10.353,
+   "label": "S2 last"
+  },
+  {
+   "file": "frames/f007_0010.473s.png",
+   "time": 10.473,
+   "label": "S3 first"
+  },
+  {
+   "file": "frames/f008_0011.800s.png",
+   "time": 11.8,
+   "label": "S3 peak"
+  },
+  {
+   "file": "frames/f009_0013.133s.png",
+   "time": 13.133,
+   "label": "S3 peak"
+  },
+  {
+   "file": "frames/f010_0013.600s.png",
+   "time": 13.6,
+   "label": "S3 mid"
+  },
+  {
+   "file": "frames/f011_0016.687s.png",
+   "time": 16.687,
+   "label": "S3 last"
+  },
+  {
+   "file": "frames/f012_0016.900s.png",
+   "time": 16.9,
+   "label": "S4 mid"
+  },
+  {
+   "file": "frames/f013_0017.073s.png",
+   "time": 17.073,
+   "label": "S5 first"
+  },
+  {
+   "file": "frames/f014_0017.300s.png",
+   "time": 17.3,
+   "label": "S5 peak"
+  },
+  {
+   "file": "frames/f015_0017.650s.png",
+   "time": 17.65,
+   "label": "S5 mid"
+  },
+  {
+   "file": "frames/f016_0018.200s.png",
+   "time": 18.2,
+   "label": "S5 peak"
+  },
+  {
+   "file": "frames/f017_0018.307s.png",
+   "time": 18.307,
+   "label": "S6 first"
+  },
+  {
+   "file": "frames/f018_0018.467s.png",
+   "time": 18.467,
+   "label": "S6 peak"
+  },
+  {
+   "file": "frames/f019_0019.267s.png",
+   "time": 19.267,
+   "label": "S6 peak"
+  },
+  {
+   "file": "frames/f020_0020.250s.png",
+   "time": 20.25,
+   "label": "S6 mid"
+  },
+  {
+   "file": "frames/f021_0021.400s.png",
+   "time": 21.4,
+   "label": "S6 peak"
+  },
+  {
+   "file": "frames/f022_0021.667s.png",
+   "time": 21.667,
+   "label": "S6 peak"
+  },
+  {
+   "file": "frames/f023_0022.000s.png",
+   "time": 22.0,
+   "label": "S6 peak"
+  },
+  {
+   "file": "frames/f024_0022.153s.png",
+   "time": 22.153,
+   "label": "S6 last"
+  },
+  {
+   "file": "frames/f025_0022.500s.png",
+   "time": 22.5,
+   "label": "S7 peak"
+  },
+  {
+   "file": "frames/f026_0022.550s.png",
+   "time": 22.55,
+   "label": "S7 mid"
+  }
+ ],
+ "environment": {
+  "blender_executable": "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe",
+  "gpu": "NVIDIA GeForce RTX 4060, 8188 MiB",
+  "speech_to_text": true,
+  "optical_flow": true,
+  "yt_dlp": false
+ },
+ "transcript": {
+  "language": "en",
+  "device": "cpu",
+  "segments": 1,
+  "file": "transcript.json"
+ }
+}

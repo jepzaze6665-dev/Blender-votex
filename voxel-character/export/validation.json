@@ -1,0 +1,90 @@
+{
+ "file_kb": 2584,
+ "triangles": 51916,
+ "size_m": [
+  0.98,
+  0.52,
+  1.9
+ ],
+ "feet_z": 0.0,
+ "normals_outward": true,
+ "part_count": 19,
+ "parts": {
+  "ArmL": {
+   "triangles": 1484,
+   "signed_volume": 0.00731
+  },
+  "ArmR": {
+   "triangles": 1460,
+   "signed_volume": 0.0071
+  },
+  "FootL": {
+   "triangles": 1696,
+   "signed_volume": 0.00926
+  },
+  "FootR": {
+   "triangles": 1688,
+   "signed_volume": 0.00929
+  },
+  "ForeL": {
+   "triangles": 996,
+   "signed_volume": 0.00425
+  },
+  "ForeR": {
+   "triangles": 1000,
+   "signed_volume": 0.00431
+  },
+  "HandL": {
+   "triangles": 880,
+   "signed_volume": 0.00361
+  },
+  "HandR": {
+   "triangles": 820,
+   "signed_volume": 0.0035
+  },
+  "Head": {
+   "triangles": 6196,
+   "signed_volume": 0.07492
+  },
+  "Hips": {
+   "triangles": 3740,
+   "signed_volume": 0.0339
+  },
+  "LegL": {
+   "triangles": 4664,
+   "signed_volume": 0.04117
+  },
+  "LegR": {
+   "triangles": 4692,
+   "signed_volume": 0.04114
+  },
+  "PadL": {
+   "triangles": 3752,
+   "signed_volume": 0.02561
+  },
+  "PadR": {
+   "triangles": 3700,
+   "signed_volume": 0.02494
+  },
+  "SkirtB": {
+   "triangles": 2908,
+   "signed_volume": 0.01339
+  },
+  "SkirtF": {
+   "triangles": 3984,
+   "signed_volume": 0.02495
+  },
+  "SkirtL": {
+   "triangles": 1808,
+   "signed_volume": 0.00444
+  },
+  "SkirtR": {
+   "triangles": 1692,
+   "signed_volume": 0.0043
+  },
+  "Torso": {
+   "triangles": 4756,
+   "signed_volume": 0.04933
+  }
+ }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "character_hero_modular_frost_01",
+  "type": "character",
+  "rig": "biped_block",
+  "model": "../../web-prototype/assets/voxel_modular_rigged.glb",
+  "source": "original, sculpted part by part in voxel-modular/build_modular.py",
+  "equips": [
+    "weapon_scythe_frost_01",
+    "prop_wings_crystal_angel_01"
+  ],
+  "vfx": [
+    "vfx_skill_frost_crescent_01",
+    "vfx_skill_blizzard_vortex_01",
+    "vfx_skill_winter_eclipse_01"
+  ]
+}

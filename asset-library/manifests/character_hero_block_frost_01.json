@@ -1,0 +1,15 @@
+{
+  "id": "character_hero_block_frost_01",
+  "type": "character",
+  "rig": "biped_block",
+  "model": "../../web-prototype/assets/voxel_block_rigged.glb",
+  "source": "original, from the user's generated block turnaround sheet",
+  "equips": [
+    "weapon_scythe_frost_01"
+  ],
+  "vfx": [
+    "vfx_skill_frost_crescent_01",
+    "vfx_skill_blizzard_vortex_01",
+    "vfx_skill_winter_eclipse_01"
+  ]
+}

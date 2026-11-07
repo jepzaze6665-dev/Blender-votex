@@ -1,0 +1,9 @@
+{
+  "id": "prop_map_ice_temple_01",
+  "type": "prop",
+  "class": "map",
+  "model": "../../web-prototype/assets/ice_temple_map.glb",
+  "collision": "../../web-prototype/assets/ice_temple_collision.json",
+  "reference": "assets/from-user/ice-temple-map-concept.png",
+  "source": "original, built by voxel-map/build_map.py using the user's concept as a reference"
+}

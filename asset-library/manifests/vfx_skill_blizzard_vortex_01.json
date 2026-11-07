@@ -1,0 +1,11 @@
+{
+  "id": "vfx_skill_blizzard_vortex_01",
+  "type": "vfx",
+  "kind": "ground_area",
+  "attach": "Ground",
+  "built_with": "Blender keyframed voxel rings, voxel-vfx/build_blizzard_vortex.py",
+  "reference": "assets/from-user/vfx-voxel-concept.webp",
+  "source": "original procedural effect, using the user's concept as a shape reference",
+  "model": "../../web-prototype/assets/vfx_blizzard_vortex.glb",
+  "layers_2d": "assets/from-user/vfx2d-vortex.png"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "prop_wings_crystal_angel_01",
+  "type": "prop",
+  "class": "wings",
+  "model": "../../web-prototype/assets/voxel_wings.glb",
+  "tiers": {
+    "1": "Frame, Primary",
+    "2": "Secondary, Core, Gem, light pulse",
+    "3": "Covert, Shard, flowing sparkles",
+    "4": "All layers, dense sparkles, full pulse"
+  },
+  "reference": "assets/from-user/crystal-wings-concept.png",
+  "source": "original, sculpted in voxel-wings/build_wings.py",
+  "variants": {
+    "slim": "../../web-prototype/assets/voxel_wings_slim.glb"
+  }
+}

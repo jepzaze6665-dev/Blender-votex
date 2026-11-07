@@ -1,0 +1,11 @@
+{
+  "id": "vfx_skill_winter_eclipse_01",
+  "type": "vfx",
+  "kind": "ultimate",
+  "attach": "Ground",
+  "built_with": "Blender keyframed voxel pieces, voxel-vfx/build_winter_eclipse.py, with short 2D impact layers",
+  "reference": "assets/from-user/vfx-voxel-concept.webp",
+  "source": "original procedural effect, using the user's concept as a shape reference",
+  "layers_2d": "assets/from-user/vfx2d-eclipse.png",
+  "model": "../../web-prototype/assets/vfx_winter_eclipse.glb"
+}

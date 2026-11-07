@@ -1,0 +1,44 @@
+{
+  "image": "oathbreaker_verdict_sheet_256.png",
+  "frame_w": 256,
+  "frame_h": 256,
+  "cols": 9,
+  "rows": 8,
+  "frames": 72,
+  "fps": 24,
+  "anchor_feet": [
+    128.0,
+    145.78
+  ],
+  "anchor_core": [
+    128.0,
+    122.77
+  ],
+  "phases_frames": {
+    "appear": [
+      1,
+      12
+    ],
+    "charge": [
+      12,
+      26
+    ],
+    "release": [
+      26,
+      40
+    ],
+    "impact": [
+      40,
+      51
+    ],
+    "follow_through": [
+      51,
+      61
+    ],
+    "fade_out": [
+      61,
+      72
+    ]
+  },
+  "impact_frame": 44
+}

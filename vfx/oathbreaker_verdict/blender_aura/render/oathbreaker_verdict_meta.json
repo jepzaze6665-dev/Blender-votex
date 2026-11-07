@@ -1,0 +1,56 @@
+{
+  "skill": "Oathbreaker Verdict",
+  "class": "OATHBREAKER",
+  "game": "ECLIPSE ONLINE",
+  "fps": 24,
+  "frames": 72,
+  "duration_s": 3.0,
+  "resolution": [
+    1024,
+    1024
+  ],
+  "camera": {
+    "type": "orthographic",
+    "ortho_scale": 10.6,
+    "rot_x_deg": 60,
+    "rot_z_deg": 45,
+    "pixels_per_meter": 96.60377358490567
+  },
+  "anchor_feet_px": [
+    512.0,
+    583.11
+  ],
+  "anchor_core_px": [
+    512.0,
+    491.08
+  ],
+  "phases_frames": {
+    "appear": [
+      1,
+      12
+    ],
+    "charge": [
+      12,
+      26
+    ],
+    "release": [
+      26,
+      40
+    ],
+    "impact": [
+      40,
+      51
+    ],
+    "follow_through": [
+      51,
+      61
+    ],
+    "fade_out": [
+      61,
+      72
+    ]
+  },
+  "impact_frame": 44,
+  "alpha": "straight (unpremultiplied) RGBA",
+  "seed": 6665
+}
